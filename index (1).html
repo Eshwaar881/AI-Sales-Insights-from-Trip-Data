@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RouteIQ — AI Sales Insights</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0d10; --bg2: #111419; --bg3: #181c22;
+    --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+    --text: #e8ecf0; --muted: #6b7685;
+    --accent: #00e5b4; --accent2: #0099ff;
+    --danger: #ff5b5b; --warn: #f0a500; --success: #00e5b4;
+    --card-r: 14px;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); font-size: 14px; line-height: 1.6; min-height: 100vh; }
+  .shell { display: grid; grid-template-rows: 56px 1fr; min-height: 100vh; }
+  header { background: var(--bg2); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 12px; }
+  .logo { font-family: var(--font-head); font-weight: 800; font-size: 18px; letter-spacing: -0.5px; color: var(--accent); }
+  .logo span { color: var(--text); }
+  .badge-pill { background: rgba(0,229,180,0.1); border: 1px solid rgba(0,229,180,0.25); color: var(--accent); font-size: 11px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 100px; font-weight: 500; }
+  .main { display: grid; grid-template-columns: 280px 1fr; height: calc(100vh - 56px); overflow: hidden; }
+  .sidebar { background: var(--bg2); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .upload-zone { border: 1.5px dashed var(--border2); border-radius: var(--card-r); padding: 24px 16px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: rgba(0,229,180,0.04); }
+  .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .upload-icon { font-size: 28px; color: var(--accent); margin-bottom: 8px; }
+  .upload-title { font-family: var(--font-head); font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+  .upload-sub { font-size: 11px; color: var(--muted); }
+  .file-chip { background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 10px 12px; display: flex; align-items: center; gap: 10px; font-size: 12px; }
+  .file-chip .fname { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .file-chip .fmeta { color: var(--muted); font-size: 11px; }
+  .filters { display: flex; flex-direction: column; gap: 8px; }
+  .filter-row { display: flex; flex-direction: column; gap: 4px; }
+  .filter-row label { font-size: 11px; color: var(--muted); }
+  select { width: 100%; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 7px 10px; font-size: 12px; font-family: var(--font-body); outline: none; cursor: pointer; }
+  select:focus { border-color: var(--accent); }
+  .btn-primary { width: 100%; background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 10px 16px; font-family: var(--font-head); font-weight: 700; font-size: 13px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-primary:hover { background: #00ffca; transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--bg3); color: var(--muted); cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 8px; padding: 7px 12px; font-size: 12px; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+  .btn-ghost:hover { color: var(--text); background: var(--bg3); }
+  .content { overflow-y: auto; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+  .empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 60px 40px; }
+  .empty-icon { width: 64px; height: 64px; border-radius: 16px; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 28px; color: var(--accent); }
+  .empty-state h2 { font-family: var(--font-head); font-size: 20px; font-weight: 700; }
+  .empty-state p { color: var(--muted); max-width: 320px; font-size: 13px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .kpi-label { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0.3px; }
+  .kpi-value { font-family: var(--font-head); font-size: 22px; font-weight: 700; line-height: 1; }
+  .kpi-delta { font-size: 11px; font-family: var(--font-mono); display: flex; align-items: center; gap: 3px; }
+  .delta-up { color: var(--success); } .delta-down { color: var(--danger); }
+  .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); overflow: hidden; }
+  .panel-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; font-family: var(--font-head); font-weight: 600; font-size: 13px; }
+  .panel-body { padding: 16px 18px; }
+  .route-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .route-row:last-child { border-bottom: none; }
+  .route-name { flex: 1; font-weight: 500; }
+  .route-badge { padding: 2px 8px; border-radius: 100px; font-size: 10px; font-family: var(--font-mono); font-weight: 500; }
+  .badge-success { background: rgba(0,229,180,0.12); color: var(--accent); }
+  .badge-danger { background: rgba(255,91,91,0.12); color: var(--danger); }
+  .badge-warn { background: rgba(240,165,0,0.12); color: var(--warn); }
+  .badge-info { background: rgba(0,153,255,0.12); color: var(--accent2); }
+  .bar-wrap { height: 4px; background: var(--bg3); border-radius: 100px; overflow: hidden; width: 60px; }
+  .bar-fill { height: 100%; border-radius: 100px; background: var(--accent); }
+  .ai-panel { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--card-r); overflow: hidden; }
+  .ai-panel-head { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-family: var(--font-head); font-weight: 600; font-size: 13px; }
+  .ai-tag { background: rgba(0,229,180,0.1); border: 1px solid rgba(0,229,180,0.2); color: var(--accent); font-size: 10px; font-family: var(--font-mono); padding: 2px 8px; border-radius: 100px; }
+  .ai-body { padding: 20px 18px; font-size: 13px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .customers-list { display: flex; flex-direction: column; gap: 0; }
+  .customer-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .customer-row:last-child { border-bottom: none; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #000; flex-shrink: 0; }
+  .cname { font-weight: 500; flex: 1; } .crevenue { font-family: var(--font-mono); font-size: 12px; color: var(--accent); } .ctrips { color: var(--muted); font-size: 11px; }
+  .tab-bar { display: flex; gap: 4px; background: var(--bg3); border-radius: 10px; padding: 4px; }
+  .tab { flex: 1; padding: 7px 12px; border-radius: 7px; border: none; background: transparent; color: var(--muted); font-size: 12px; font-family: var(--font-body); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .tab.active { background: var(--bg2); color: var(--text); font-weight: 500; border: 1px solid var(--border); }
+  .question-bar { display: flex; gap: 8px; align-items: center; }
+  .q-input { flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 9px 14px; font-size: 13px; font-family: var(--font-body); outline: none; }
+  .q-input:focus { border-color: var(--accent); }
+  .q-input::placeholder { color: var(--muted); }
+  .btn-send { background: var(--accent); border: none; border-radius: 8px; padding: 9px 14px; color: #000; font-size: 16px; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; }
+  .btn-send:hover { background: #00ffca; }
+  .btn-send:disabled { background: var(--bg3); color: var(--muted); cursor: not-allowed; }
+  .scrollable { overflow-x: auto; }
+  table.data-table { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 480px; }
+  table.data-table th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 500; font-size: 10px; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+  table.data-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px; }
+  table.data-table tr:last-child td { border-bottom: none; }
+  table.data-table tr:hover td { background: var(--bg3); }
+  .chat-history { display: flex; flex-direction: column; gap: 14px; max-height: 340px; overflow-y: auto; margin-bottom: 12px; }
+  .chat-msg { max-width: 88%; padding: 10px 14px; border-radius: 10px; font-size: 13px; line-height: 1.6; }
+  .chat-msg.user { align-self: flex-end; background: rgba(0,229,180,0.1); border: 1px solid rgba(0,229,180,0.2); }
+  .chat-msg.ai { align-self: flex-start; background: var(--bg3); border: 1px solid var(--border); }
+  .chat-msg.ai.thinking { color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .dots span { display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--muted); margin: 0 1px; animation: bounce 1.2s ease-in-out infinite; }
+  .dots span:nth-child(2) { animation-delay: 0.2s; } .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+  .tag { display: inline-flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <div class="logo">route<span>IQ</span></div>
+    <div class="badge-pill">AI Sales Insights · Prototype</div>
+    <div style="flex:1"></div>
+    <div style="font-size:12px; color:var(--muted); font-family:var(--font-mono);">Claude-powered</div>
+  </header>
+  <div class="main">
+    <div class="sidebar">
+      <div>
+        <div class="section-label">Data Source</div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.json" />
+          <div class="upload-icon"><i class="ti ti-table-import" aria-hidden="true"></i></div>
+          <div class="upload-title">Upload trip data</div>
+          <div class="upload-sub">CSV, Excel, or JSON · max 10MB</div>
+        </div>
+      </div>
+      <div id="fileChip" style="display:none">
+        <div class="file-chip">
+          <i class="ti ti-file-spreadsheet" style="font-size:18px; color:var(--accent)" aria-hidden="true"></i>
+          <div>
+            <div class="fname" id="chipName">—</div>
+            <div class="fmeta" id="chipMeta">—</div>
+          </div>
+          <button class="btn-ghost" id="clearFile" style="padding:4px 7px; font-size:12px"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+      </div>
+      <div>
+        <div class="section-label">Filters</div>
+        <div class="filters">
+          <div class="filter-row"><label>Time period</label>
+            <select id="filterPeriod"><option>All time</option><option>Last 30 days</option><option>Last quarter</option><option>Last 6 months</option><option>This year</option></select>
+          </div>
+          <div class="filter-row"><label>Focus area</label>
+            <select id="filterFocus"><option>Full summary</option><option>Revenue &amp; margins</option><option>Delays &amp; performance</option><option>Customer analysis</option><option>Route efficiency</option></select>
+          </div>
+          <div class="filter-row"><label>Insight depth</label>
+            <select id="filterDepth"><option>Executive summary</option><option>Detailed analysis</option><option>Action plan</option></select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px">
+        <button class="btn-primary" id="analyseBtn" disabled><i class="ti ti-sparkles" aria-hidden="true"></i> Analyse with AI</button>
+        <button class="btn-ghost" id="sampleBtn" style="width:100%; justify-content:center"><i class="ti ti-database" aria-hidden="true"></i> Load sample data</button>
+      </div>
+      <div style="margin-top:auto; padding-top:16px; border-top: 1px solid var(--border)">
+        <div class="section-label">Tech stack</div>
+        <div style="display:flex; flex-direction:column; gap:6px; font-size:11px; color:var(--muted)">
+          <div class="tag"><i class="ti ti-brain" style="font-size:14px" aria-hidden="true"></i> Claude Sonnet 4 (LLM)</div>
+          <div class="tag"><i class="ti ti-message-chatbot" style="font-size:14px" aria-hidden="true"></i> Prompt engineering + RAG</div>
+          <div class="tag"><i class="ti ti-chart-bar" style="font-size:14px" aria-hidden="true"></i> Data analysis pipeline</div>
+          <div class="tag"><i class="ti ti-brand-whatsapp" style="font-size:14px" aria-hidden="true"></i> WhatsApp delivery ready</div>
+        </div>
+      </div>
+    </div>
+    <div class="content" id="content">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon"><i class="ti ti-chart-treemap" aria-hidden="true"></i></div>
+        <h2>Upload trip data to begin</h2>
+        <p>The AI will automatically detect routes, revenue, delays, and customers — no manual analysis needed.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center">
+          <button class="btn-ghost" onclick="loadSample()"><i class="ti ti-database" aria-hidden="true"></i> Try with sample data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const SAMPLE_DATA = [
+  {trip_id:"T001",route:"Hyderabad → Mumbai",customer:"Reliance Logistics",revenue:42000,cost:31000,delay_mins:0,date:"2024-01-05",vehicle:"TN09AB1234"},
+  {trip_id:"T002",route:"Chennai → Bangalore",customer:"TCS Freight",revenue:18500,cost:16200,delay_mins:45,date:"2024-01-07",vehicle:"AP01CD5678"},
+  {trip_id:"T003",route:"Delhi → Jaipur",customer:"Flipkart Supply",revenue:9800,cost:7200,delay_mins:120,date:"2024-01-09",vehicle:"DL05EF9012"},
+  {trip_id:"T004",route:"Hyderabad → Mumbai",customer:"Reliance Logistics",revenue:41000,cost:30500,delay_mins:0,date:"2024-01-12",vehicle:"TN09AB1234"},
+  {trip_id:"T005",route:"Mumbai → Pune",customer:"Amazon India",revenue:6200,cost:5900,delay_mins:0,date:"2024-01-14",vehicle:"MH02GH3456"},
+  {trip_id:"T006",route:"Bangalore → Chennai",customer:"Infosys Cargo",revenue:17800,cost:16100,delay_mins:90,date:"2024-01-16",vehicle:"KA03IJ7890"},
+  {trip_id:"T007",route:"Delhi → Agra",customer:"MakeMyTrip Tours",revenue:5400,cost:5200,delay_mins:30,date:"2024-01-18",vehicle:"UP14KL1234"},
+  {trip_id:"T008",route:"Hyderabad → Vijayawada",customer:"AP State Transport",revenue:12000,cost:9800,delay_mins:0,date:"2024-01-20",vehicle:"AP28MN5678"},
+  {trip_id:"T009",route:"Chennai → Coimbatore",customer:"TCS Freight",revenue:14500,cost:11200,delay_mins:60,date:"2024-01-22",vehicle:"TN22OP9012"},
+  {trip_id:"T010",route:"Delhi → Jaipur",customer:"Flipkart Supply",revenue:9600,cost:7800,delay_mins:180,date:"2024-01-25",vehicle:"DL05EF9012"},
+  {trip_id:"T011",route:"Mumbai → Pune",customer:"Amazon India",revenue:6400,cost:5800,delay_mins:15,date:"2024-01-27",vehicle:"MH02GH3456"},
+  {trip_id:"T012",route:"Hyderabad → Mumbai",customer:"Wipro Logistics",revenue:43500,cost:31500,delay_mins:0,date:"2024-01-29",vehicle:"TS07QR3456"},
+  {trip_id:"T013",route:"Bangalore → Mysore",customer:"Infosys Cargo",revenue:7200,cost:6900,delay_mins:20,date:"2024-02-02",vehicle:"KA03IJ7890"},
+  {trip_id:"T014",route:"Delhi → Jaipur",customer:"Flipkart Supply",revenue:9200,cost:8400,delay_mins:240,date:"2024-02-05",vehicle:"DL05EF9012"},
+  {trip_id:"T015",route:"Hyderabad → Vijayawada",customer:"AP State Transport",revenue:11800,cost:9600,delay_mins:0,date:"2024-02-08",vehicle:"AP28MN5678"},
+  {trip_id:"T016",route:"Chennai → Bangalore",customer:"Wipro Logistics",revenue:19200,cost:15800,delay_mins:30,date:"2024-02-10",vehicle:"TN22OP9012"},
+  {trip_id:"T017",route:"Mumbai → Nashik",customer:"Amazon India",revenue:8900,cost:8100,delay_mins:0,date:"2024-02-12",vehicle:"MH02GH3456"},
+  {trip_id:"T018",route:"Hyderabad → Mumbai",customer:"Reliance Logistics",revenue:44000,cost:32000,delay_mins:0,date:"2024-02-15",vehicle:"TN09AB1234"},
+  {trip_id:"T019",route:"Delhi → Agra",customer:"MakeMyTrip Tours",revenue:5100,cost:5050,delay_mins:0,date:"2024-02-18",vehicle:"UP14KL1234"},
+  {trip_id:"T020",route:"Bangalore → Chennai",customer:"TCS Freight",revenue:18000,cost:16800,delay_mins:75,date:"2024-02-20",vehicle:"KA03IJ7890"},
+];
+
+let tripData = [], chatHistory = [], analysisContext = "", activeTab = 'insights', fileLoaded = false;
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g,''));
+  return lines.slice(1).map(line => {
+    const vals = line.split(','); const obj = {};
+    headers.forEach((h, i) => { obj[h] = vals[i]?.trim().replace(/"/g,''); });
+    return obj;
+  });
+}
+
+function loadSample() {
+  tripData = SAMPLE_DATA; fileLoaded = true;
+  document.getElementById('chipName').textContent = 'sample_trips.csv';
+  document.getElementById('chipMeta').textContent = `${tripData.length} trips · demo data`;
+  document.getElementById('fileChip').style.display = 'block';
+  document.getElementById('analyseBtn').disabled = false;
+  document.getElementById('emptyState')?.remove();
+  renderDataPreview();
+}
+
+document.getElementById('sampleBtn').onclick = loadSample;
+document.getElementById('clearFile').onclick = () => {
+  tripData = []; fileLoaded = false;
+  document.getElementById('fileChip').style.display = 'none';
+  document.getElementById('analyseBtn').disabled = true;
+  analysisContext = ''; chatHistory = [];
+  document.getElementById('content').innerHTML = `<div class="empty-state" id="emptyState">
+    <div class="empty-icon"><i class="ti ti-chart-treemap" aria-hidden="true"></i></div>
+    <h2>Upload trip data to begin</h2>
+    <p>The AI will automatically detect routes, revenue, delays, and customers — no manual analysis needed.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+      <button class="btn-ghost" onclick="loadSample()"><i class="ti ti-database" aria-hidden="true"></i> Try with sample data</button>
+    </div></div>`;
+};
+
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      tripData = parseCSV(ev.target.result); fileLoaded = true;
+      document.getElementById('chipName').textContent = file.name;
+      document.getElementById('chipMeta').textContent = `${tripData.length} rows · ${(file.size/1024).toFixed(1)} KB`;
+      document.getElementById('fileChip').style.display = 'block';
+      document.getElementById('analyseBtn').disabled = false;
+      document.getElementById('emptyState')?.remove();
+      renderDataPreview();
+    } catch(err) { alert('Could not parse file. Please use CSV format.'); }
+  };
+  reader.readAsText(file);
+});
+
+function computeStats() {
+  const totalRevenue = tripData.reduce((s, r) => s + (+r.revenue || 0), 0);
+  const totalCost = tripData.reduce((s, r) => s + (+r.cost || 0), 0);
+  const totalMargin = totalRevenue - totalCost;
+  const marginPct = totalRevenue > 0 ? ((totalMargin / totalRevenue) * 100).toFixed(1) : 0;
+  const delayed = tripData.filter(r => (+r.delay_mins || 0) > 0);
+  const onTime = tripData.length - delayed.length;
+  const routeMap = {};
+  tripData.forEach(r => {
+    const route = r.route || r.Route || 'Unknown';
+    if (!routeMap[route]) routeMap[route] = { revenue: 0, cost: 0, count: 0, delay: 0 };
+    routeMap[route].revenue += +r.revenue || 0; routeMap[route].cost += +r.cost || 0;
+    routeMap[route].count += 1; routeMap[route].delay += +r.delay_mins || 0;
+  });
+  const routes = Object.entries(routeMap).map(([name, d]) => ({
+    name, ...d, margin: d.revenue - d.cost,
+    marginPct: d.revenue > 0 ? ((d.revenue - d.cost) / d.revenue * 100).toFixed(1) : 0,
+    avgDelay: d.count > 0 ? (d.delay / d.count).toFixed(0) : 0
+  })).sort((a, b) => b.revenue - a.revenue);
+  const custMap = {};
+  tripData.forEach(r => {
+    const c = r.customer || r.Customer || 'Unknown';
+    if (!custMap[c]) custMap[c] = { revenue: 0, trips: 0 };
+    custMap[c].revenue += +r.revenue || 0; custMap[c].trips += 1;
+  });
+  const customers = Object.entries(custMap).map(([name, d]) => ({ name, ...d })).sort((a, b) => b.revenue - a.revenue);
+  return { totalRevenue, totalMargin, marginPct, onTime, delayed: delayed.length, routes, customers,
+    delayedRoutes: [...routes].sort((a, b) => b.avgDelay - a.avgDelay),
+    lowMarginRoutes: [...routes].sort((a, b) => a.marginPct - b.marginPct) };
+}
+
+function fmt(n) {
+  if (n >= 100000) return '₹' + (n/100000).toFixed(1) + 'L';
+  if (n >= 1000) return '₹' + (n/1000).toFixed(1) + 'K';
+  return '₹' + n;
+}
+
+function renderDataPreview() {
+  const content = document.getElementById('content');
+  document.getElementById('emptyState')?.remove();
+  content.innerHTML = `
+    <div style="display:flex; align-items:center; justify-content:space-between">
+      <div>
+        <div style="font-family:var(--font-head); font-size:16px; font-weight:700">Trip Data Preview</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:2px">${tripData.length} records loaded · Ready to analyse</div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab active" onclick="switchTab('preview', this)">Preview</button>
+        <button class="tab" onclick="switchTab('insights', this)">AI Insights</button>
+        <button class="tab" onclick="switchTab('chat', this)">Ask AI</button>
+      </div>
+    </div>
+    <div id="tabContent"></div>`;
+  renderTab('preview');
+}
+
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active'); activeTab = tab; renderTab(tab);
+}
+
+function renderTab(tab) {
+  const tc = document.getElementById('tabContent');
+  if (tab === 'preview') renderPreviewTab(tc);
+  else if (tab === 'insights') renderInsightsTab(tc);
+  else if (tab === 'chat') renderChatTab(tc);
+}
+
+function renderPreviewTab(tc) {
+  const cols = tripData.length > 0 ? Object.keys(tripData[0]) : [];
+  const rows = tripData.slice(0, 10);
+  tc.innerHTML = `<div class="panel"><div class="panel-head"><i class="ti ti-table" aria-hidden="true"></i> First 10 rows</div>
+    <div class="panel-body scrollable"><table class="data-table">
+      <thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r => `<tr>${cols.map(c => `<td>${r[c] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table></div></div>`;
+}
+
+function renderInsightsTab(tc) {
+  if (!analysisContext) {
+    tc.innerHTML = `<div style="text-align:center; padding:40px; color:var(--muted); font-size:13px">
+      <i class="ti ti-sparkles" style="font-size:28px; color:var(--accent); display:block; margin-bottom:12px" aria-hidden="true"></i>
+      Click <strong style="color:var(--text)">"Analyse with AI"</strong> in the sidebar to generate insights</div>`;
+    return;
+  }
+  const stats = computeStats();
+  tc.innerHTML = `
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Total Revenue</div><div class="kpi-value" style="color:var(--accent)">${fmt(stats.totalRevenue)}</div><div class="kpi-delta delta-up"><i class="ti ti-trending-up" aria-hidden="true"></i>${stats.marginPct}% margin</div></div>
+      <div class="kpi-card"><div class="kpi-label">Net Margin</div><div class="kpi-value">${fmt(stats.totalMargin)}</div><div class="kpi-delta delta-up">${stats.marginPct}% of revenue</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Trips</div><div class="kpi-value">${tripData.length}</div><div class="kpi-delta delta-up"><i class="ti ti-check" aria-hidden="true"></i>${stats.onTime} on-time</div></div>
+      <div class="kpi-card"><div class="kpi-label">Delayed Trips</div><div class="kpi-value" style="color:${stats.delayed > 3 ? 'var(--danger)' : 'var(--warn)'}">${stats.delayed}</div><div class="kpi-delta delta-down">${((stats.delayed/tripData.length)*100).toFixed(0)}% delay rate</div></div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel"><div class="panel-head" style="color:var(--accent)"><i class="ti ti-route" aria-hidden="true"></i> Top Revenue Routes</div>
+        <div class="panel-body">${stats.routes.slice(0,5).map((r,i) => {
+          const pct = Math.round((r.revenue/stats.totalRevenue)*100);
+          const bc = +r.marginPct > 25 ? 'badge-success' : +r.marginPct > 15 ? 'badge-warn' : 'badge-danger';
+          return `<div class="route-row"><span style="font-size:10px;color:var(--muted);font-family:var(--font-mono);width:16px">${i+1}</span><span class="route-name">${r.name}</span><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%"></div></div><span class="${bc} route-badge">${r.marginPct}%</span><span style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${fmt(r.revenue)}</span></div>`;
+        }).join('')}</div>
+      </div>
+      <div class="panel"><div class="panel-head" style="color:var(--warn)"><i class="ti ti-clock-exclamation" aria-hidden="true"></i> Most Delayed Routes</div>
+        <div class="panel-body">${stats.delayedRoutes.filter(r=>r.avgDelay>0).slice(0,5).map((r,i) =>
+          `<div class="route-row"><span style="font-size:10px;color:var(--muted);font-family:var(--font-mono);width:16px">${i+1}</span><span class="route-name">${r.name}</span><span class="badge-danger route-badge">${r.avgDelay} min avg</span><span style="font-size:11px;color:var(--muted)">${r.count} trips</span></div>`
+        ).join('') || '<div style="color:var(--muted);font-size:13px">No delays recorded — great!</div>'}</div>
+      </div>
+    </div>
+    <div class="panel-grid">
+      <div class="panel"><div class="panel-head" style="color:var(--accent2)"><i class="ti ti-users" aria-hidden="true"></i> High-Value Customers</div>
+        <div class="panel-body"><div class="customers-list">${stats.customers.slice(0,5).map(c =>
+          `<div class="customer-row"><div class="avatar">${c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div><div class="cname">${c.name}</div><div class="ctrips">${c.trips} trips</div><div class="crevenue">${fmt(c.revenue)}</div></div>`
+        ).join('')}</div></div>
+      </div>
+      <div class="panel"><div class="panel-head" style="color:var(--danger)"><i class="ti ti-trending-down" aria-hidden="true"></i> Low-Margin Routes</div>
+        <div class="panel-body">${stats.lowMarginRoutes.slice(0,5).map((r,i) =>
+          `<div class="route-row"><span style="font-size:10px;color:var(--muted);font-family:var(--font-mono);width:16px">${i+1}</span><span class="route-name">${r.name}</span><span class="${+r.marginPct < 10 ? 'badge-danger' : 'badge-warn'} route-badge">${r.marginPct}%</span><span style="font-size:11px;color:var(--muted)">${r.count} trips</span></div>`
+        ).join('')}</div>
+      </div>
+    </div>
+    <div class="ai-panel"><div class="ai-panel-head"><div style="display:flex;align-items:center;gap:8px"><i class="ti ti-sparkles" aria-hidden="true"></i> AI Analysis</div><div class="ai-tag">Claude Sonnet 4</div></div>
+      <div class="ai-body" id="aiSummary">${analysisContext}</div>
+    </div>`;
+}
+
+function renderChatTab(tc) {
+  tc.innerHTML = `<div class="ai-panel"><div class="ai-panel-head"><div style="display:flex;align-items:center;gap:8px"><i class="ti ti-message-chatbot" aria-hidden="true"></i> Ask about your data</div><div class="ai-tag">RAG-powered</div></div>
+    <div class="panel-body" style="padding:16px 18px">
+      <div class="chat-history" id="chatHistory">
+        ${chatHistory.length === 0 ? `<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Ask any question about your trip data</div>` : chatHistory.map(m=>`<div class="chat-msg ${m.role}">${m.content}</div>`).join('')}
+      </div>
+      <div class="question-bar">
+        <input class="q-input" id="chatInput" type="text" placeholder="e.g. Which route has the best ROI this month?" />
+        <button class="btn-send" id="sendBtn" onclick="sendChat()"><i class="ti ti-send" aria-hidden="true"></i></button>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        ${["Top route by profit?","Any low-margin trips?","Worst delayed customer?"].map(q=>`<button class="btn-ghost" style="font-size:11px;padding:5px 10px" onclick="quickQ('${q}')">${q}</button>`).join('')}
+      </div>
+    </div></div>`;
+}
+
+function quickQ(q) { document.getElementById('chatInput').value = q; sendChat(); }
+
+async function sendChat() {
+  const inp = document.getElementById('chatInput');
+  const q = inp.value.trim(); if (!q) return;
+  inp.value = '';
+  chatHistory.push({ role: 'user', content: q });
+  renderTab('chat');
+  const ch = document.getElementById('chatHistory');
+  const thinking = document.createElement('div');
+  thinking.className = 'chat-msg ai thinking';
+  thinking.innerHTML = `<div class="dots"><span></span><span></span><span></span></div> Analysing...`;
+  ch.appendChild(thinking); ch.scrollTop = ch.scrollHeight;
+  const stats = computeStats();
+  const dataContext = `Trip data: ${tripData.length} trips. Revenue: ${fmt(stats.totalRevenue)}. Margin: ${stats.marginPct}%. Delayed: ${stats.delayed}. Top routes: ${stats.routes.slice(0,3).map(r=>r.name+' ('+fmt(r.revenue)+', '+r.marginPct+'% margin)').join(', ')}. Top customers: ${stats.customers.slice(0,3).map(c=>c.name+' ('+fmt(c.revenue)+')').join(', ')}. Most delayed: ${stats.delayedRoutes[0]?.name} (${stats.delayedRoutes[0]?.avgDelay} min avg).`;
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000,
+        system: `You are an AI business analyst for a transport/logistics company. Context: ${dataContext}. Answer in 2-4 sentences, be direct and actionable.`,
+        messages: chatHistory.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content })) })
+    });
+    const data = await resp.json();
+    chatHistory.push({ role: 'ai', content: data.content?.[0]?.text || "Sorry, couldn't process that." });
+  } catch(e) { chatHistory.push({ role: 'ai', content: "API error — please check your connection and try again." }); }
+  renderTab('chat');
+}
+
+document.getElementById('analyseBtn').onclick = async () => {
+  const btn = document.getElementById('analyseBtn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:1.5px"></div> Analysing...';
+  const stats = computeStats();
+  const focus = document.getElementById('filterFocus').value;
+  const depth = document.getElementById('filterDepth').value;
+  const period = document.getElementById('filterPeriod').value;
+  const prompt = `You are an expert transport business analyst. Analyse this trip data and provide a ${depth} for the owner.\n\nData (${period}):\n- Total trips: ${tripData.length}\n- Total revenue: ₹${stats.totalRevenue.toLocaleString()}\n- Net margin: ${stats.marginPct}% (₹${stats.totalMargin.toLocaleString()})\n- On-time: ${stats.onTime}, Delayed: ${stats.delayed}\n- Top routes: ${stats.routes.slice(0,4).map(r=>r.name+': ₹'+r.revenue.toLocaleString()+' ('+r.marginPct+'% margin, avg delay '+r.avgDelay+' min)').join(' | ')}\n- Top customers: ${stats.customers.slice(0,4).map(c=>c.name+': ₹'+c.revenue.toLocaleString()+' ('+c.trips+' trips)').join(' | ')}\n- Lowest margin routes: ${stats.lowMarginRoutes.slice(0,3).map(r=>r.name+': '+r.marginPct+'%').join(' | ')}\n- Most delayed: ${stats.delayedRoutes.filter(r=>r.avgDelay>0).slice(0,3).map(r=>r.name+': '+r.avgDelay+' min avg').join(' | ')}\n\nFocus: ${focus}\n\nProvide a concise business summary with:\n1. Key wins / top performing areas\n2. Concerns or red flags\n3. 2-3 specific actionable recommendations\n\nKeep it under 200 words. Write for a non-technical business owner.`;
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
+    });
+    const data = await resp.json();
+    analysisContext = data.content?.[0]?.text || "Analysis unavailable.";
+  } catch(e) { analysisContext = "Could not connect to AI. Please try again."; }
+  btn.disabled = false; btn.innerHTML = '<i class="ti ti-sparkles" aria-hidden="true"></i> Re-analyse';
+  document.querySelectorAll('.tab').forEach(t => { if (t.textContent === 'AI Insights') t.click(); });
+};
+</script>
+</body>
+</html>
